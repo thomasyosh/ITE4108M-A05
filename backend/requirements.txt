@@ -1,0 +1,7 @@
+fastapi[standard]
+peewee
+psycopg2
+pymysql
+requests
+peewee-migrations
+pandas
