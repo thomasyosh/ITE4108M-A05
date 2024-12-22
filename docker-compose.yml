@@ -24,8 +24,12 @@ services:
     image: nextjs-dev
     ports:
       - 3000:3000
-    environment:
-      NODE_ENV: development
+    env_file:
+      - .env
+    volumes:
+      - ./frontend/src:/app/src
+    # environment:
+    #   NODE_ENV: development
     develop:
       watch:
         - action: sync
