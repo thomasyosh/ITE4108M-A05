@@ -2,7 +2,7 @@
 git clone https://github.com/thomasyosh/ITP4606project.git
 ```
 ```
-cd ITP4606
+cd ITP4606project
 ```
 ### Edit env file
 
