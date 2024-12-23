@@ -6,7 +6,7 @@ cd ITP4606project
 ```
 ### Edit env file
 
-### Execute shell script for docker installation and database initialisation
+### If you would like to run this app on a linux platform , you may execute shell script for docker installation and database initialisation
 ```
 sh setup.sh
 ```
