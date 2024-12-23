@@ -3,8 +3,7 @@
 . ./.env
 
 if [ "$DATABASE_TYPE" = "postgres" ] && [ "$LOCAL_DB" = "no" ]; then
-    docker run -v ./backend/db/init.sh:/init.sh --env-file .env --rm postgres:latest ./init.sh
-    docker rmi $(docker images 'postgres' -a -q)
+    docker run -v ./backend/db/init.sh:/init.sh --env-file .env --rm postgres:17.0-alpine ./init.sh
     echo "$DATABASE_TYPE" database init completed;
 fi
 
