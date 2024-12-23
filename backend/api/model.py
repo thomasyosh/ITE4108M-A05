@@ -4,21 +4,31 @@ import datetime
 
 db_type = os.getenv("DATABASE_TYPE")
 db_connection = None
+local_db = os.getenv("LOCAL_DB")
 
-if db_type == "postgres":
-    db_connection = PostgresqlDatabase(
-        os.getenv("POSTGRES_DB"),
-        user=os.getenv("POSTGRES_USER"),
-        host=os.getenv("POSTGRES_HOST"),
-        password=os.getenv("POSTGRES_PASSWORD")
+if local_db == "false":
+    if db_type == "postgres":
+        db_connection = PostgresqlDatabase(
+            os.getenv("POSTGRES_DB"),
+            user=os.getenv("POSTGRES_USER"),
+            host=os.getenv("POSTGRES_HOST"),
+            password=os.getenv("POSTGRES_PASSWORD")
+            )
+    elif db_type == "mysql":
+        db_connection = MySQLDatabase(
+            os.getenv("MYSQL_DB"),
+            user=os.getenv("MYSQL_USER"),
+            host=os.getenv("MYSQL_HOST"),
+            password=os.getenv("MYSQL_PASSWORD")
         )
-elif db_type == "mysql":
-    db_connection = MySQLDatabase(
-        os.getenv("MYSQL_DB"),
-        user=os.getenv("MYSQL_USER"),
-        host=os.getenv("MYSQL_HOST"),
-        password=os.getenv("MYSQL_PASSWORD")
-    )
+else:
+    db_connection = PostgresqlDatabase(
+            os.getenv("POSTGRES_DB"),
+            user=os.getenv("POSTGRES_USER"),
+            host="localdb",
+            password=os.getenv("POSTGRES_PASSWORD")
+            )
+    
 
 
 class NullTextField(TextField):
