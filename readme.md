@@ -13,7 +13,7 @@ sh setup.sh
 
 ### Run the app on docker
 ```
-docker compose up --watch
+docker compose up
 ```
 
 ### Stop the app from running
