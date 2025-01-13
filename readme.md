@@ -22,6 +22,6 @@ docker compose down
 ```
 
 ### Endpoints:
-**/api**
+**/api/docs**
 
 **/db**
