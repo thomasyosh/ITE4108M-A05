@@ -50,7 +50,7 @@ services:
   localdb:
     image: postgres:17.0-alpine
     volumes:
-      - ./postgres_data:/var/lib/postgresql
+      - ./postgres_data:/var/lib/postgresql/data
     environment:
       - POSTGRES_USER=$POSTGRES_USER
       - POSTGRES_PASSWORD=$POSTGRES_PASSWORD
