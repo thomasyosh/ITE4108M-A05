@@ -5,3 +5,4 @@ pymysql
 requests
 peewee-migrations
 pandas
+debugpy

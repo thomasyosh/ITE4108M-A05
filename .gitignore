@@ -1,1 +1,2 @@
 postgres_data/*
+backend/api/__pycache__/*

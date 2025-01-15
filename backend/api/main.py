@@ -3,8 +3,8 @@ import os
 from peewee import *
 import psycopg2
 import pymysql
-from model import Testing, BaseModel, db_connection
-from post_item import Item, FormData
+from .model import Testing, BaseModel, db_connection
+from .post_item import Item, FormData
 from typing import Annotated
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
