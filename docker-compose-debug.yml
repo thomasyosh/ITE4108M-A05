@@ -10,3 +10,48 @@ services:
         - .env
     volumes:
         - ./backend/api:/app/api
+  
+  reverse-proxy:
+    build:
+      context: ./reverse-proxy
+    ports:
+      - 80:80
+    volumes:
+      - ./reverse-proxy/nginx.conf:/etc/nginx/nginx.conf
+  frontend:
+    build:
+      context: ./frontend
+    image: nextjs-dev
+    ports:
+      - 3000:3000
+    env_file:
+      - .env
+    volumes:
+      - ./frontend/src:/app/src
+    # environment:
+    #   NODE_ENV: development
+    develop:
+      watch:
+        - action: sync
+          path: ./frontend/src
+          target: /app/src
+          ignore:
+            - node_modules/
+        - action: rebuild
+          path: package.json
+
+  adminer:
+    image: adminer
+    ports:
+        - 8080:8080
+  
+  localdb:
+    image: postgres:17.0-alpine
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=$POSTGRES_USER
+      - POSTGRES_PASSWORD=$POSTGRES_PASSWORD
+      - POSTGRES_DB=$POSTGRES_DB
+    ports:
+      - 5432:5432
