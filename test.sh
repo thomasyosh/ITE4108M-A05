@@ -14,7 +14,7 @@ if [ "$DATABASE_TYPE" = "mysql" ] && [ "$LOCAL_DB" = "no" ]; then
 fi
 
 if [ "$LOCAL_DB" = "yes" ]; then
-    docker run -v ./backend/db/localdb.sh:/localdb.sh --env-file .env --rm postgres:latest ./localdb.sh
+    docker run -v ./backend/db/localdb.sh:/localdb.sh --env-file .env --rm postgres:17.0-alpine ./localdb.sh
     docker rmi $(docker images 'postgres' -a -q)
-    echo "$DATABASE_TYPE" database init completed;
+    echo "$DATABASE_TYPE" database init completed in local db;
 fi
