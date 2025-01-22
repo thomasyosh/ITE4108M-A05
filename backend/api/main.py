@@ -9,6 +9,8 @@ from typing import Annotated
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
 import json
+from .routers.api import api_router
+from .models.users import User
 
 app = FastAPI(
     title=os.getenv("PROJECT_NAME"),
@@ -31,7 +33,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
+app.include_router(api_router)
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 fake_users_db = {

@@ -28,8 +28,6 @@ else:
             host="localdb",
             password=os.getenv("POSTGRES_PASSWORD")
             )
-    
-
 
 class NullTextField(TextField):
     def __init__(self, *args, **kwargs):
@@ -71,8 +69,8 @@ class User(BaseModel):
     telephone = TextField(null = True)
     password = TextField(null = True)
 
-try:
-    db_connection.create_tables([Testing, User])
+# try:
+#     db_connection.create_tables([Testing, User])
     
-except Exception as e:
-    print ("Database connection error")
+# except Exception as e:
+#     print ("Database connection error")

@@ -6,3 +6,4 @@ requests
 peewee-migrations
 pandas
 debugpy
+sqlalchemy
