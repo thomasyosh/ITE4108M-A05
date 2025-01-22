@@ -7,3 +7,6 @@ peewee-migrations
 pandas
 debugpy
 sqlalchemy
+pyjwt
+passlib
+bcrypt

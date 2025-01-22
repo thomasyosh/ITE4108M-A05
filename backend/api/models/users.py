@@ -16,9 +16,9 @@ class User(Base):
     first_name= Column(String(255), unique=True, nullable=False)
     last_name= Column(String(255), unique=True, nullable=False)
     hashed_password= Column(String(255), unique=True, nullable=False)
-    provider= Column(String(255), unique=True, nullable=False)
-    picture= Column(String(255), unique=True, nullable=False)
-    is_active= Column(Boolean, unique=True, nullable=False)
-    is_superuser= Column(Boolean, unique=True, nullable=False)
+    provider= Column(String(255), unique=True, nullable=True)
+    picture= Column(String(255), unique=True, nullable=True)
+    is_active= Column(Boolean, unique=True, nullable=True)
+    is_superuser= Column(Boolean, unique=True, nullable=True)
 
 Base.metadata.create_all(engine)

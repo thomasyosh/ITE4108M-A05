@@ -2,3 +2,8 @@ postgres_data/*
 backend/api/__pycache__/*
 backend/api/routers/__pycache__/*
 backend/api/auth/__pycache__/*
+backend/api/schemas/__pycache__/__init__.cpython-313.pyc
+backend/api/schemas/__pycache__/tokens.cpython-313.pyc
+backend/api/schemas/__pycache__/users.cpython-313.pyc
+backend/api/database/__pycache__/__init__.cpython-313.pyc
+backend/api/schemas/__pycache__/__init__.cpython-313.pyc
