@@ -9,4 +9,4 @@ debugpy
 sqlalchemy
 pyjwt
 passlib
-bcrypt
+bcrypt==4.0.1

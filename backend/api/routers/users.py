@@ -14,6 +14,7 @@ from ..auth.auth import (
 )
 
 router = APIRouter()
+session.autoflush = True
 
 @router.post("", response_model=users.User)
 async def register_user(
@@ -32,5 +33,12 @@ async def register_user(
     try:
         session.add(user)
         session.commit()
+        return user
     except exc.SQLAlchemyError as e:
         return e
+
+
+@router.get("", response_model=list[users.User])
+async def get_all_user():
+    users = session.query(User).all()
+    return users
