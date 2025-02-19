@@ -1,6 +1,7 @@
 
 
 
+
 INSERT INTO steps (id, recipe_id, step_number , instruction) VALUES
 (8065, 185350, 2, '加入適量鹽、薑片、大蔥、1湯匙紹興酒和擠上檸檬汁，醃20分鐘。'),
 (8066, 185350, 3, '泡辣椒剁碎，雞蛋打散，備用。'),
