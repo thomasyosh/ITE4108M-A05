@@ -1,12 +1,22 @@
 from pydantic import BaseModel, Field
 import datetime
 
-class Item(BaseModel):
-    name: str = Field(default='John Doe')
-    
-    
-class FormData(BaseModel):
-    pk_id: int
+class Recipe(BaseModel):
+    id: int
+    title: str
+    date: datetime.date
+    description: str
+    cooking_time: str
+    serving_size: str
+
+class Ingredient(BaseModel):
+    id: int
+    recipe_id: int
     name: str
-    is_active: bool
-    model_config = {"extra": "forbid"}
+    quantity: str
+
+class Step(BaseModel):
+    id: int
+    recipe_id: int
+    step_number: int
+    instruction: str

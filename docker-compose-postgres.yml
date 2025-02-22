@@ -47,15 +47,17 @@ services:
     ports:
         - 8080:8080
   
+
   localdb:
-    image: mongo:3.1
-    volumes:
-      - ./mongo_data:/var/lib/mongodb/data
+    image: postgres
     environment:
-        MONGO_HOST=$MONGO_HOST
-      - MONGO_USER=$MONGO_USER
-      - MONGO_PASSWORD=$MONGO_PASSWORD
-      - MONGO_DB=$MONGO_DB
+      POSTGRES_DB: ITP4606
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: rootpassword
     ports:
-      - 8081:8081
-    restart: unless-stopped
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

@@ -1,8 +1,9 @@
 fastapi[standard]
-peewee
+pydantic
 psycopg2
 pymysql
 requests
 peewee-migrations
 pandas
 debugpy
+sqlalchemy
