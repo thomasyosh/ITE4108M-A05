@@ -6,4 +6,8 @@ requests
 peewee-migrations
 pandas
 debugpy
+<<<<<<< Updated upstream
 sqlalchemy
+=======
+uvicorn>=0.20.0
+>>>>>>> Stashed changes
