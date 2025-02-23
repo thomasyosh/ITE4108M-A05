@@ -22,6 +22,8 @@ docker compose down
 ```
 
 ### Endpoints:
-**/api/docs**
+http://localhost/api/docs
 
-**/db**
+
+## Adminer:
+http://localhost/db/
