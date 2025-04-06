@@ -1,171 +1,199 @@
-from fastapi import FastAPI, Form, HTTPException, status, Depends
 import os
-from peewee import *
-import psycopg2
-import pymysql
-from .model import Testing, BaseModel, db_connection
-from .post_item import Item, FormData
-from typing import Annotated
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from fastapi.middleware.cors import CORSMiddleware
-import json
+import uvicorn
+from fastapi import FastAPI, Depends, HTTPException
+from pydantic import BaseModel
+from datetime import date
+from typing import List
+from sqlalchemy import create_engine, Column, Integer, String, Date, ForeignKey
+from sqlalchemy.orm import declarative_base, sessionmaker, Session, relationship
 
-app = FastAPI(
-    title=os.getenv("PROJECT_NAME"),
-    root_path= "/api",
-    docs_url="/docs"
-    )
+# Database setup
+SQLALCHEMY_DATABASE_URL = 'postgresql://postgres:12345678@database-1.cmxnkws8hcin.us-east-1.rds.amazonaws.com/food'
+engine = create_engine(SQLALCHEMY_DATABASE_URL)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+Base = declarative_base()
 
-origins = [
-    "http://localhost.tiangolo.com",
-    "https://localhost.tiangolo.com",
-    "http://localhost",
-    "http://localhost:3000",
-]
+class DBRecipe(Base):
+    __tablename__ = "recipes"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    title = Column(String(255), nullable=False)
+    date = Column(Date, nullable=False)
+    description = Column(String(500))
+    cooking_time = Column(String(100))
+    serving_size = Column(String(100))
+    
+    ingredients = relationship("DBIngredient", back_populates="recipe", cascade="all, delete-orphan")
+    steps = relationship("DBStep", back_populates="recipe", cascade="all, delete-orphan")
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+class DBIngredient(Base):
+    __tablename__ = "ingredients"
+    id = Column(Integer, primary_key=True, index=True)
+    recipe_id = Column(Integer, ForeignKey("recipes.id"))
+    name = Column(String(100), nullable=False)
+    quantity = Column(String(50))
+    
+    recipe = relationship("DBRecipe", back_populates="ingredients")
+
+class DBStep(Base):
+    __tablename__ = "steps"
+    id = Column(Integer, primary_key=True, index=True)
+    recipe_id = Column(Integer, ForeignKey("recipes.id"))
+    step_number = Column(Integer, nullable=False)
+    instruction = Column(String(500), nullable=False)
+    
+    recipe = relationship("DBRecipe", back_populates="steps")
 
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
-fake_users_db = {
-    "johndoe": {
-        "username": "johndoe",
-        "full_name": "John Doe",
-        "email": "johndoe@example.com",
-        "hashed_password": "fakehashedsecret",
-        "disabled": False,
-    },
-    "alice": {
-        "username": "alice",
-        "full_name": "Alice Wonderson",
-        "email": "alice@example.com",
-        "hashed_password": "fakehashedsecret2",
-        "disabled": True,
-    },
-}
+# Pydantic models (you already had these)
+class Recipe(BaseModel):
+    id: int
+    title: str
+    date: date
+    description: str
+    cooking_time: str
+    serving_size: str
+    ingredients: List["Ingredient"] = []
+    steps: List["Step"] = []
 
-def connection():
+    class Config:
+        orm_mode = True
+
+class Ingredient(BaseModel):
+    id: int
+    recipe_id: int
+    name: str
+    quantity: str
+
+    class Config:
+        orm_mode = True
+
+class Step(BaseModel):
+    id: int
+    recipe_id: int
+    step_number: int
+    instruction: str
+
+    class Config:
+        orm_mode = True
+
+# Dependency to get DB session
+def get_db():
+    db = SessionLocal()
     try:
-        with db_connection.connection_context() as db:
-            return db_connection.close()
-    except:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Database error, please check env file")
-     
-def fake_hash_password(password: str):
-    return "fakehashed" + password
+        yield db
+    finally:
+        db.close()
 
-@app.get("/connection")
-async def test():
-    return connection()
+# FastAPI setup
+app = FastAPI()
 
-@app.get("/")
-async def read_all():
-    if connection():
-        query = Testing.select().order_by(Testing.pk_id).dicts()
-        return list(query)
-
-@app.get("/testing")
-async def read_item(pk_id: int):
-    if connection():
-        query = Testing().select().where(Testing.pk_id == pk_id)
-        if query.exists():
-            return query.dicts().get()
-        else:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Item not found")
-
-@app.post("/testing")
-async def root(item: Item):
-    if connection():
-        data = Testing()
-        data.name = item.name
-        data.save()
-        query = Testing().select().where(Testing.pk_id == data.pk_id).dicts().get()
-        return query
-
-@app.put("/update")
-async def update_record(data: Annotated[FormData, Form()]) -> None:
-    if connection():
-        query = Testing()\
-            .select()\
-                .where(
-                    Testing.pk_id == data.pk_id
-                    )
-        if query.exists():
-            update_data = Testing().update({Testing.name:data.name, Testing.is_active:data.is_active}).where(Testing.pk_id == data.pk_id)
-            update_data.execute()
-        else:
-            raise HTTPException(status_code=404, detail="Item not found")
-        query = Testing().select().where(Testing.pk_id == data.pk_id).dicts().get()
-        return query
-
-class User(BaseModel):
-    username: str
-    email: str | None = None
-    full_name: str | None = None
-    disabled: bool | None = None
-
-
-class UserInDB(User):
-    hashed_password: str
-
-
-def get_user(db, username: str):
-    if username in db:
-        user_dict = db[username]
-        return UserInDB(**user_dict)
-
-
-def fake_decode_token(token):
-    # This doesn't provide any security at all
-    # Check the next version
-    user = get_user(fake_users_db, token)
-    return user
-
-
-async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
-    user = fake_decode_token(token)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication credentials",
-            headers={"WWW-Authenticate": "Bearer"},
+# CRUD endpoints
+@app.post("/recipes/", response_model=Recipe)
+def create_recipe(recipe: Recipe, db: Session = Depends(get_db)):
+    db_recipe = DBRecipe(
+        title=recipe.title,
+        date=recipe.date,
+        description=recipe.description,
+        cooking_time=recipe.cooking_time,
+        serving_size=recipe.serving_size
+    )
+    db.add(db_recipe)
+    db.commit()
+    db.refresh(db_recipe)
+    
+    # Add ingredients
+    for ingredient in recipe.ingredients:
+        db_ingredient = DBIngredient(
+            recipe_id=db_recipe.id,
+            name=ingredient.name,
+            quantity=ingredient.quantity
         )
-    return user
+        db.add(db_ingredient)
+    
+    # Add steps
+    for step in recipe.steps:
+        db_step = DBStep(
+            recipe_id=db_recipe.id,
+            step_number=step.step_number,
+            instruction=step.instruction
+        )
+        db.add(db_step)
+    
+    db.commit()
+    return db_recipe
 
+@app.get("/recipes/", response_model=List[Recipe])
+def read_recipes(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    recipes = db.query(DBRecipe).offset(skip).limit(limit).all()
+    return recipes
 
-async def get_current_active_user(
-    current_user: Annotated[User, Depends(get_current_user)],
-):
-    if current_user.disabled:
-        raise HTTPException(status_code=400, detail="Inactive user")
-    return current_user
+@app.get("/recipes/{recipe_id}", response_model=Recipe)
+def read_recipe(recipe_id: int, db: Session = Depends(get_db)):
+    db_recipe = db.query(DBRecipe).filter(DBRecipe.id == recipe_id).first()
+    if db_recipe is None:
+        raise HTTPException(status_code=404, detail="Recipe not found")
+    return db_recipe
 
+@app.put("/recipes/{recipe_id}", response_model=Recipe)
+def update_recipe(recipe_id: int, recipe: Recipe, db: Session = Depends(get_db)):
+    db_recipe = db.query(DBRecipe).filter(DBRecipe.id == recipe_id).first()
+    if db_recipe is None:
+        raise HTTPException(status_code=404, detail="Recipe not found")
+    
+    # Update recipe fields
+    db_recipe.title = recipe.title
+    db_recipe.date = recipe.date
+    db_recipe.description = recipe.description
+    db_recipe.cooking_time = recipe.cooking_time
+    db_recipe.serving_size = recipe.serving_size
+    
+    # Delete existing ingredients and steps
+    db.query(DBIngredient).filter(DBIngredient.recipe_id == recipe_id).delete()
+    db.query(DBStep).filter(DBStep.recipe_id == recipe_id).delete()
+    
+    # Add new ingredients
+    for ingredient in recipe.ingredients:
+        db_ingredient = DBIngredient(
+            recipe_id=recipe_id,
+            name=ingredient.name,
+            quantity=ingredient.quantity
+        )
+        db.add(db_ingredient)
+    
+    # Add new steps
+    for step in recipe.Steps:
+        db_step = DBStep(
+            recipe_id=recipe_id,
+            step_number=step.step_number,
+            instruction=step.instruction
+        )
+        db.add(db_step)
+    
+    db.commit()
+    db.refresh(db_recipe)
+    return db_recipe
 
-@app.post("/token")
-async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
-    user_dict = fake_users_db.get(form_data.username)
-    if not user_dict:
-        raise HTTPException(status_code=400, detail="Incorrect username or password")
-    user = UserInDB(**user_dict)
-    hashed_password = fake_hash_password(form_data.password)
-    if not hashed_password == user.hashed_password:
-        raise HTTPException(status_code=400, detail="Incorrect username or password")
+@app.delete("/recipes/{recipe_id}")
+def delete_recipe(recipe_id: int, db: Session = Depends(get_db)):
+    db_recipe = db.query(DBRecipe).filter(DBRecipe.id == recipe_id).first()
+    if db_recipe is None:
+        raise HTTPException(status_code=404, detail="Recipe not found")
+    
+    db.delete(db_recipe)
+    db.commit()
+    return {"message": "Recipe deleted successfully"}
 
-    return {"access_token": user.username, "token_type": "bearer"}
-
-
-@app.get("/users/me")
-async def read_users_me(
-    current_user: Annotated[User, Depends(get_current_active_user)],
-):
-    return current_user
-
+@app.get("/step/{step_id}", response_model=Step)
+def read_step(step_id: int, db: Session = Depends(get_db)):
+    """
+    Get a specific step by its ID
+    """
+    db_step = db.query(DBStep).filter(DBStep.id == step_id).first()
+    if db_step is None:
+        raise HTTPException(status_code=404, detail="Step not found")
+    return db_step
+# Run the application
 if __name__ == "__main__":
-    print(1)
+    Base.metadata.create_all(bind=engine)
+    uvicorn.run(app, host="0.0.0.0", port=8000)

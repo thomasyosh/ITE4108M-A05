@@ -1,68 +1,86 @@
-from sqlalchemy import *
+from sqlalchemy import create_engine, Column, Integer, String, Date, ForeignKey
+from sqlalchemy.orm import declarative_base, sessionmaker, Session, relationship
+from post_item import Base
+from pydantic import BaseModel
+from datetime import date
+from typing import List
+
 import os
-import datetime
+from datetime import date
 
 db_type = os.getenv("DATABASE_TYPE")
 db_connection = None
 
 if db_type == "postgres":
-        db_connection = PostgresqlDatabase(
-            os.getenv("POSTGRES_DB"),
-            user=os.getenv("POSTGRES_USER"),
-            host=os.getenv("POSTGRES_HOST"),
-            password=os.getenv("POSTGRES_PASSWORD")
-            )
-elif db_type == "mysql":
-        db_connection = MySQLDatabase(
-            os.getenv("MYSQL_DB"),
-            user=os.getenv("MYSQL_USER"),
-            host=os.getenv("MYSQL_HOST"),
-            password=os.getenv("MYSQL_PASSWORD")
-        )
+    engine = create_engine(f"postgresql://{os.getenv('POSTGRES_USER')}:{os.getenv('POSTGRES_PASSWORD')}@{os.getenv('POSTGRES_HOST')}/{os.getenv('POSTGRES_DB')}")
+    db_connection = engine
 
 
-class NullTextField(TextField):
-    def __init__(self, *args, **kwargs):
-        kwargs.setdefault('null', True)
-        super(NullTextField, self).__init__(*args, **kwargs)
 
-class BaseModel(Model):
-    pk_id = AutoField()
-    created_date = DateTimeField(default=datetime.datetime.now)
-    modified_date = DateTimeField(null = True)
-    is_active = BooleanField(default=True)
+# Database setup
+SQLALCHEMY_DATABASE_URL = 'postgresql://postgres:12345678@database-1.cmxnkws8hcin.us-east-1.rds.amazonaws.com/food'
+engine = create_engine(SQLALCHEMY_DATABASE_URL)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+Base = declarative_base()
+
+class DBRecipe(Base):
+    __tablename__ = "recipes"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    title = Column(String(255), nullable=False)
+    date = Column(Date, nullable=False)
+    description = Column(String(500))
+    cooking_time = Column(String(100))
+    serving_size = Column(String(100))
     
-    class Meta:
-        database = db_connection
+    ingredients = relationship("DBIngredient", back_populates="recipe", cascade="all, delete-orphan")
+    steps = relationship("DBStep", back_populates="recipe", cascade="all, delete-orphan")
 
-    @classmethod
-    def update(cls, *args, **kwargs):
-        kwargs["modified_date"] = datetime.datetime.now()
-        return super(BaseModel,cls).update(*args, **kwargs)
-
-    def save(self, *args, **kwargs):
-        self.created_date = datetime.datetime.now()
-        return super(BaseModel,self).save(*args, **kwargs)
+class DBIngredient(Base):
+    __tablename__ = "ingredients"
+    id = Column(Integer, primary_key=True, index=True)
+    recipe_id = Column(Integer, ForeignKey("recipes.id"))
+    name = Column(String(100), nullable=False)
+    quantity = Column(String(50))
     
-    @classmethod
-    def fieldnames(cls) -> list[str]:
-        return [f.name for f in cls.fields()]
+    recipe = relationship("DBRecipe", back_populates="ingredients")
+
+class DBStep(Base):
+    __tablename__ = "steps"
+    id = Column(Integer, primary_key=True, index=True)
+    recipe_id = Column(Integer, ForeignKey("recipes.id"))
+    step_number = Column(Integer, nullable=False)
+    instruction = Column(String(500), nullable=False)
     
-    @classmethod
-    def fields(cls) -> list[Field]:
-        print("Override method for <BaseModel.fields> not implemented!")
-        return []
+    recipe = relationship("DBRecipe", back_populates="steps")
 
-class Testing(BaseModel):    
-    name = NullTextField()
+# Pydantic models (you already had these)
+class Recipe(BaseModel):
+    id: int
+    title: str
+    date: date
+    description: str
+    cooking_time: str
+    serving_size: str
+    ingredients: List["Ingredient"] = []
+    steps: List["Step"] = []
 
-class User(BaseModel):
-    name = TextField(null = True)
-    telephone = TextField(null = True)
-    password = TextField(null = True)
+    class Config:
+        orm_mode = True
 
-try:
-    db_connection.create_tables([Testing, User])
-    
-except Exception as e:
-    print ("Database connection error")
+class Ingredient(BaseModel):
+    id: int
+    recipe_id: int
+    name: str
+    quantity: str
+
+    class Config:
+        orm_mode = True
+
+class Step(BaseModel):
+    id: int
+    recipe_id: int
+    step_number: int
+    instruction: str
+
+    class Config:
+        orm_mode = True

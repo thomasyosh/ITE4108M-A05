@@ -1,8 +1,8 @@
 
 
-DROP TABLE recipes CASCADE;
-DROP TABLE steps CASCADE;
-DROP TABLE ingredients CASCADE;
+-- DROP TABLE recipes CASCADE;
+-- DROP TABLE steps CASCADE;
+-- DROP TABLE ingredients CASCADE;
 
 CREATE TABLE recipes (
   id INT PRIMARY KEY,
